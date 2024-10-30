@@ -1,0 +1,128 @@
+name: Go Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag name of release"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        # Include amd64 on all platforms.
+        goos: [ windows, linux, darwin, freebsd ]
+        goarch: [ amd64, 386 ]
+        goamd64: [ v1, v3 ]
+        exclude:
+          # Exclude GOAMD64 v3 on i386
+          - goarch: 386
+            goamd64: v3
+          # Exclude i386 on darwin and dragonfly.
+          - goarch: 386
+            goos: dragonfly
+          - goarch: 386
+            goos: darwin
+        include:
+          # BEGIN macOS ARM64
+          - goos: darwin
+            goarch: arm64
+          # END macOS ARM64
+          # BEGIN Linux ARM 5 6 7
+          - goos: linux
+            goarch: arm
+            goarm: 7
+          - goos: linux
+            goarch: arm
+            goarm: 6
+          - goos: linux
+            goarch: arm
+            goarm: 5
+          # END Linux ARM 5 6 7
+          # BEGIN Android ARM 8
+          - goos: android
+            goarch: arm64
+          # END Android ARM 8
+          # Windows ARM
+          - goos: windows
+            goarch: arm64
+          - goos: windows
+            goarch: arm
+            goarm: 7
+          # BEGIN Other architectures
+          # BEGIN riscv64 & ARM64
+          - goos: linux
+            goarch: arm64
+          - goos: freebsd
+            goarch: arm64
+          - goos: linux
+            goarch: riscv64
+          # END riscv64 & ARM64
+          # BEGIN MIPS
+          - goos: linux
+            goarch: mips64
+          - goos: linux
+            goarch: mips64le
+          - goos: linux
+            goarch: mipsle
+          - goos: linux
+            goarch: mips
+          # END MIPS
+          # BEGIN LOONGARCH
+          - goos: linux
+            goarch: loong64
+          # END LOONGARCH
+          # BEGIN S390X
+          - goos: linux
+            goarch: s390x
+          # END S390X
+          # END Other architectures
+
+    runs-on: ubuntu-latest
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      GOARM: ${{ matrix.goarm }}
+      GOAMD64: ${{ matrix.goamd64 }}
+      CGO_ENABLED: 0
+      BUILD_NAME: traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm != '' && format('-{0}', matrix.goarm) || '' }}${{ matrix.goamd64 != '' && format('-{0}', matrix.goamd64) || '' }}${{ matrix.goos == 'windows' && '.exe' || '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ^1.20
+          check-latest: true
+
+      - name: Tidy up Go Modules
+        run: go mod tidy
+
+      - name: Build
+        run: go build -v -trimpath -o $BUILD_NAME
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BUILD_NAME }}
+          path: ${{ env.BUILD_NAME }}
+
+  Publish:
+    permissions: write-all
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version }}
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: bin/
+          merge-multiple: true
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        if: ${{ success() }}
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          files: bin/*
+          prerelease: false
