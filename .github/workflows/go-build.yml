@@ -19,14 +19,14 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23.2'
+          go-version: '1.21'
 
       - name: Build
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          go build -o traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }} main.go
+          go build -o traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
@@ -49,6 +49,6 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/*  # 上传所有生成的二进制文件
+          files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
