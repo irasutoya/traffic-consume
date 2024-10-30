@@ -1,4 +1,4 @@
-name: build
+name: Go Build
 
 on:
   workflow_dispatch:
@@ -85,7 +85,7 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       GOAMD64: ${{ matrix.goamd64 }}
       CGO_ENABLED: 0
-      BUILD_NAME: traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}-${{ matrix.goarm }}${{ matrix.goarm && '-' + matrix.goarm || '' }}${{ matrix.goamd64 && '-' + matrix.goamd64 || '' }}${{ matrix.goos == 'windows' && '.exe' || '' }}
+      BUILD_NAME: traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}-${{ matrix.goarm }}${{ matrix.goarm && matrix.goarm || '' }}${{ matrix.goamd64 && matrix.goamd64 || '' }}${{ matrix.goos == 'windows' && '.exe' || '' }}
 
     steps:
       - uses: actions/checkout@v4
