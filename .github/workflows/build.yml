@@ -99,7 +99,7 @@ jobs:
         run: go mod tidy
 
       - name: Build
-        run: go build $BUILD_NAME
+        run: go build -v -trimpath -o $BUILD_NAME
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
