@@ -6,7 +6,7 @@ import (
 
 var (
 	appName = "traffic-consume"
-	version = "1.0.1-0x0129"
+	version = "1.0.0-0x0129"
 	date    = "1989-06-04"
 )
 
