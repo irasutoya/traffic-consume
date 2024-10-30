@@ -1,54 +1,58 @@
-name: Build and Release
-
+name: Go Build
 on:
   push:
     tags:
       - '*.*.*'
-
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  buildAndDeploy:
+    runs-on:  ubuntu-latest
     strategy:
       matrix:
-        goos: [linux, darwin, windows]
-        goarch: [amd64, arm64]
+        include:
+          - goarch: amd64
+            goos: linux
+          - goarch: arm64
+            goos: linux
+          - goarch: amd64
+            goos: darwin
+          - goarch: arm64
+            goos: darwin
+          - goarch: amd64
+            goos: windows
+          - goarch: arm64
+            goos: windows
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: 'latest'
-
-      - name: Build
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          go build -o traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: artifacts
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: artifacts/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 'latest'
+    - run: go version
+    - name: make
+      run: make
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+    - name: Packaging...
+      run: tar czf traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}.tgz traffic-consume
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GOACTION }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          Release
+        draft: false
+        prerelease: false
+    - name: Uploading assets...
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GOACTION }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+        asset_name: traffic-consume-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+        asset_content_type: application/gzip
