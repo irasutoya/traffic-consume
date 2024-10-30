@@ -3,26 +3,15 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - '*.*.*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        goos: [linux, darwin, windows, freebsd, netbsd, openbsd, solaris, android]
-        goarch: [amd64, arm64, arm, 386, ppc64, ppc64le, mips, mipsle, mips64, mips64le, s390x]
-        exclude:
-          - goos: darwin
-            goarch: 386
-          - goos: darwin
-            goarch: arm
-          - goos: windows
-            goarch: arm
-          - goos: solaris
-            goarch: arm
-          - goos: android
-            goarch: amd64
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -60,6 +49,6 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/*
+          files: artifacts/*  # 上传所有生成的二进制文件
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
