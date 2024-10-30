@@ -125,4 +125,4 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.version }}
           files: bin/*
-          prerelease: true
+          prerelease: false
