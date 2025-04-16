@@ -1,3 +1,1 @@
-```
-https://github.com/0x0129/traffic-consume/releases
-```
+[Releases](https://github.com/irasutoya/traffic-consume/releases)
